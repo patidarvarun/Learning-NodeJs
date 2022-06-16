@@ -85,3 +85,27 @@ exports.Searching = async (req, res) => {
       res.status(400).send({ message: err.message });
     });
 };
+
+exports.pagination = async (req, res) => {
+  var skip = (parseInt(req.params.page) - 1) * 5;
+  if (req.params.page) {
+    await Product.find()
+      .skip(skip)
+      .limit(5)
+      // .sort({ createdAt: -1 })  its show latest product
+      .then((response) => {
+        res.status(200).send(response);
+      })
+      .catch((err) => {
+        res.status(400).send({ message: err.message });
+      });
+  } else {
+    await Product.find()
+      .then((response) => {
+        res.status(200).send(response);
+      })
+      .catch((err) => {
+        res.status(400).send({ message: err.message });
+      });
+  }
+};
