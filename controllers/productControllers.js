@@ -34,6 +34,7 @@ exports.Create_Product = async (req, res) => {
     name: req.body.name,
     price: req.body.price,
     image: imagePath,
+    cat_id: req.body.cat_id,
   });
   await data
     .save()
@@ -108,4 +109,15 @@ exports.pagination = async (req, res) => {
         res.status(400).send({ message: err.message });
       });
   }
+};
+exports.get_Product_by_Category = async (req, res) => {
+  let id = req.params.id;
+  await Product.find({ cat_id: id })
+    .populate("cat_id")
+    .then((response) => {
+      res.status(200).send(response);
+    })
+    .catch((err) => {
+      res.status(400).send({ message: err.message });
+    });
 };

@@ -4,6 +4,7 @@ const cors = require("cors");
 require("dotenv").config();
 const product = require("./productRoutes");
 const register = require("./userRoutes");
+const category = require("./categoriesRoutes");
 
 const app = express();
 app.use(express.json());
@@ -13,6 +14,7 @@ app.use(cors());
 // app.use("/uploads", express.static("uploads"));
 app.use("/api", product);
 app.use("/api", register);
+app.use("/api", category);
 
 app.get("/", (req, res) => {
   res.send("<h1>Welcome to Home page</h1>");

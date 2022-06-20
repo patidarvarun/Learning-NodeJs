@@ -1,10 +1,9 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const user = require("../models/userModel");
 
 exports.Register = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, phone, password } = req.body;
 
   if (password.length < 6) {
     return res.status(400).json({ message: "Password less than 6 characters" });
@@ -14,6 +13,7 @@ exports.Register = async (req, res) => {
       await User.create({
         name,
         email,
+        phone,
         password: hash,
       })
         .then((user) =>
@@ -71,6 +71,7 @@ exports.login = async (req, res, next) => {
             _id: user._id,
             name: user.name,
             email: user.email,
+            phone: user.phone,
             role: user.role,
             token: token,
           });
