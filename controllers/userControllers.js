@@ -1,6 +1,8 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
+const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
+// const transporter = require("../config/emailConfig");
 
 exports.Register = async (req, res) => {
   const { name, email, phone, password } = req.body;
@@ -55,6 +57,11 @@ exports.login = async (req, res, next) => {
     } else {
       // comparing given password with hashed password
       bcrypt.compare(password, user.password).then(function (result) {
+        if (!result) {
+          return res.status(400).json({
+            message: "password is incorrect",
+          });
+        }
         if (result) {
           const token = jwt.sign(
             {
@@ -130,4 +137,123 @@ exports.delete_User = async (req, res) => {
     .catch((err) => {
       res.status(400).send({ message: err.message });
     });
+};
+
+exports.sendUserResetPassword = async (req, res) => {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    requireTLS: true,
+
+    auth: { user: "example2655@gmail.com", pass: "Asus231#" },
+  });
+
+  User.findOne({ email: req.body.email }).then((user) => {
+    const secret = user._id + process.env.LOGINKEY;
+    const token = jwt.sign({ userID: user._id }, secret, {
+      expiresIn: "15m",
+    });
+    if (!user) {
+      return res
+        .status(422)
+        .json({ error: "User dont exists with that email" });
+    }
+    user.resetToken = token;
+    user.expireToken = Date.now() + 3600000;
+    const link = `http://localhost:5000/api/reset/${user._id}/${token}`;
+    console.log("link", link);
+    user.save().then((result) => {
+      transporter.sendMail({
+        to: user.email,
+        from: "example2655@gmail.com",
+        subject: "password reset",
+        html: `
+                    <p>You requested for password reset</p>
+                    <h5>click in this <a href=${link}>link</a> to reset password</h5>
+                    `,
+      });
+      res.json({ message: "check your email", token });
+    });
+  });
+};
+
+// const sendMail = async (user, link) => {
+//   console.log(
+//     "!!!!!!!!!!!!!hello",
+//     process.env.EMAIL_FROM,
+//     "ebbbb",
+//     user.email,
+//     "link",
+//     link
+//   );
+//   await transporter.sendMail({
+//     from: process.env.EMAIL_FROM, // sender address
+//     to: user.email, // list of receivers
+//     subject: "Password Reset Link", // Subject line
+//     html: `<a href=${link}>Click Here</a> to Reset Your Password`, // html body
+//   });
+// };
+
+// const { email } = req.body;
+// if (email) {
+//   const user = await User.findOne({ email: email });
+//   // console.log("22222", user.email);
+//   if (user) {
+//     const secret = user._id + process.env.LOGINKEY;
+//     const token = jwt.sign({ userID: user._id }, secret, {
+//       expiresIn: "15m",
+//     });
+//     const link = `http://localhost:5000/api/reset/${user._id}/${token}`;
+//     console.log("link", link);
+//     // console.log("1111", process.env.EMAIL_FROM);
+//     // let info = await transporter.sendMail({
+//     //   from: process.env.EMAIL_FROM, // sender address
+//     //   to: user.email, // list of receivers
+//     //   subject: "Password Reset Link", // Subject line
+//     //   html: `<a href=${link}>Click Here</a> to Reset Your Password`, // html body
+//     // });
+//     sendMail(user, link).then((info) => {
+//       console.log("info", info);
+//       res.send({
+//         status: "Success",
+//         message: "Password Reset Email Sent...  Please Check Your Email",
+//         info: info,
+//       });
+//     });
+//   } else {
+//     res.send({ status: "failed", message: "Email doesn't exists" });
+//   }
+// } else {
+//   res.status(400).send({ message: err.message });
+// }
+// };
+
+exports.userPasswordReset = async (req, res) => {
+  const { password, con_password } = req.body;
+  const { id, token } = req.params;
+  const user = await User.findById(id);
+  const new_secret = user._id + process.env.LOGINKEY;
+  try {
+    jwt.verify(token, new_secret);
+    if (password && con_password) {
+      if (password !== con_password) {
+        res.send({
+          status: "failed",
+          message: "Password and Confirm password doesn't match",
+        });
+      } else {
+        const salt = await bcrypt.genSalt(10);
+        const newHashPAssword = await bcrypt.hash(password, salt);
+        await User.findByIdAndUpdate(user._id, {
+          $set: { password: newHashPAssword },
+        });
+        res.send({ status: "success", message: "Password reset successfully" });
+      }
+    } else {
+      res.send({ status: "failed", message: "All fields are required" });
+    }
+  } catch (error) {
+    console.log("error", error);
+  }
 };
