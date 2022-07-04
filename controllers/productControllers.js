@@ -33,6 +33,7 @@ exports.Create_Product = async (req, res) => {
     // _id: ObjectId,
     name: req.body.name,
     price: req.body.price,
+    description: req.body.description,
     image: imagePath,
     cat_id: req.body.cat_id,
   });
