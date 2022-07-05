@@ -7,6 +7,7 @@ const products = Schema(
     price: { type: Number, required: [true, "please enter price"] },
     description: { type: String, required: [true, "please enter description"] },
     image: { type: String, required: [true, "please enter image"] },
+    quantity: { type: Number, required: [true, "Pleade provide quantity"] },
     cat_id: {
       type: Schema.Types.ObjectId,
       ref: "prodCategorys",

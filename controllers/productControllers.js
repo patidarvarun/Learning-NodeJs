@@ -35,6 +35,7 @@ exports.Create_Product = async (req, res) => {
     price: req.body.price,
     description: req.body.description,
     image: imagePath,
+    quantity: req.body.quantity,
     cat_id: req.body.cat_id,
   });
   await data
